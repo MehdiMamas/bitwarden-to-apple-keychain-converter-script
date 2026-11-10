@@ -9,4 +9,5 @@ A single Python 3 script (`convert.py`, no dependencies) that turns a Bitwarden 
 ## Gotchas
 - Inputs and outputs contain credentials. `*.csv` and `multi_site_entries.txt` are gitignored; never commit them or paste their contents anywhere.
 - Passkeys cannot be converted via CSV.
-- No tests, build or CI in this repo.
+- Tests: `python3 -m unittest discover -s tests -v` (stdlib only, fake data in `tests/fixtures/`, the one CSV allowed in git). CI runs them on Linux, macOS and Windows.
+- `docs/images/demo.png` and `.github/social-preview.png` are rendered from HTML with headless Chromium; the social preview is uploaded by hand in Settings > Social preview.
