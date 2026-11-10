@@ -58,7 +58,34 @@ class ConvertTest(unittest.TestCase):
 
     def test_summary_output(self):
         self.assertIn("3 passwords written", self.result.stdout)
-        self.assertIn("Skipped 2", self.result.stdout)
+        self.assertIn("Found 1 multi-site entry — see", self.result.stdout)
+        self.assertIn("Skipped 2 non-login entries (notes, cards, etc.)", self.result.stdout)
+
+    def test_empty_login_skipped_and_pluralization(self):
+        export = self.tmp / "skips.csv"
+        export.write_text(
+            "folder,favorite,type,name,notes,fields,reprompt,login_uri,login_username,login_password,login_totp\n"
+            ",,login,Valid,,,0,https://example.com,user,pass,\n"
+            ",,login,Empty 1,,,0,,,,\n"
+            ",,note,Note 1,,,0,,,,\n",
+            encoding="utf-8-sig",
+        )
+        res = subprocess.run([sys.executable, str(ROOT / "convert.py"), str(export)],
+                             capture_output=True, text=True, check=True)
+        self.assertIn("Skipped 1 empty login", res.stdout)
+        self.assertIn("Skipped 1 non-login entry (notes, cards, etc.)", res.stdout)
+
+        export_plural = self.tmp / "skips_plural.csv"
+        export_plural.write_text(
+            "folder,favorite,type,name,notes,fields,reprompt,login_uri,login_username,login_password,login_totp\n"
+            ",,login,Valid,,,0,https://example.com,user,pass,\n"
+            ",,login,Empty 1,,,0,,,,\n"
+            ",,login,Empty 2,,,0,,,,\n",
+            encoding="utf-8-sig",
+        )
+        res_plural = subprocess.run([sys.executable, str(ROOT / "convert.py"), str(export_plural)],
+                                    capture_output=True, text=True, check=True)
+        self.assertIn("Skipped 2 empty logins", res_plural.stdout)
 
     def test_missing_file(self):
         r = subprocess.run([sys.executable, str(ROOT / "convert.py"), str(self.tmp / "nope.csv")],
