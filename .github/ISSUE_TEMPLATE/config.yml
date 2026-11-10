@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/MehdiMamas/bitwarden-to-apple-keychain-converter-script/discussions
+    about: Ask a question or share how the migration went

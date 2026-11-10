@@ -1,0 +1,6 @@
+folder,favorite,type,name,notes,fields,reprompt,login_uri,login_username,login_password,login_totp
+,,login,Example Mail,,,0,https://mail.example.com,alice@example.com,correct-horse-1,
+,,login,Example Shop,,,0,"https://shop.example.com,https://store.example.com",alice,battery-staple-2,
+,,note,Wifi at home,network: example,,0,,,,
+,,login,Example Forum,,,0,https://forum.example.org,,hunter2-example,
+,,card,Test card,,,0,,,,

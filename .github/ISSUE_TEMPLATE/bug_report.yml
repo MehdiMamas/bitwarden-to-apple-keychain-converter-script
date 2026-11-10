@@ -1,0 +1,25 @@
+name: Bug report
+description: Something converted wrong or the script failed
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "**Do not paste real passwords or a real export.** Replace any values with fake ones."
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you ran, what you expected and what you got (error text, wrong rows).
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: Fake sample rows
+      description: The CSV header and one or two rows with made-up values that show the problem.
+      render: csv
+  - type: input
+    id: env
+    attributes:
+      label: Python version and OS
+      placeholder: Python 3.12, macOS 15
