@@ -50,8 +50,12 @@ class ConvertTest(unittest.TestCase):
             ",,login,Empty,,,0,,,,\n",
             encoding="utf-8-sig",
         )
+        for p in [self.tmp / "chrome_import.csv", self.tmp / "multi_site_entries.txt"]:
+            if p.exists():
+                p.unlink()
+
         subprocess.run([sys.executable, str(ROOT / "convert.py"), str(export)],
-                       capture_output=True, text=True, check=True)
+                        capture_output=True, text=True, check=True)
         with open(self.tmp / "chrome_import.csv", newline="", encoding="utf-8") as f:
             rows = list(csv.reader(f))
         self.assertEqual(rows[1:], [["bob", "aaa", "aaa"]])
@@ -65,6 +69,14 @@ class ConvertTest(unittest.TestCase):
                            capture_output=True, text=True)
         self.assertNotEqual(r.returncode, 0)
 
+    
+    def test_refuses_to_overwrite_existing_files(self):
+        r = subprocess.run(
+            [sys.executable, str(ROOT / "convert.py"), str(self.export)],
+            capture_output=True, text=True
+        )
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("Warning: Output files already exist", r.stderr + r.stdout)
 
 if __name__ == "__main__":
     unittest.main()
