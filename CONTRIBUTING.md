@@ -5,7 +5,7 @@ Thanks for helping out! This is a single, dependency-free Python script, so cont
 ## Ground rules
 
 - **Never attach a real export.** Bitwarden exports and `chrome_import.csv` contain your passwords in plain text. Use fake data like `tests/fixtures/sample_export.csv` in issues and PRs.
-- Keep `convert.py` standard-library only, working on Python 3.9+.
+- Keep `convert.py` standard-library only, working on Python 3.10+.
 
 ## Setup and tests
 
