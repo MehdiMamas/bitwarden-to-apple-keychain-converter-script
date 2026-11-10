@@ -55,7 +55,6 @@ This produces two files:
 ## Notes
 
 - Everything runs locally; the script makes no network calls. Delete the export, `chrome_import.csv` and `multi_site_entries.txt` once the import is done, since they hold your passwords in plain text
-
 - The `.gitignore` excludes all CSV files and `multi_site_entries.txt` so your credentials are never committed
 - Passkeys cannot be transferred via CSV -- they are cryptographic keys tied to the device that created them. You'll need to re-register passkeys on each site from Safari/iCloud Keychain directly
 

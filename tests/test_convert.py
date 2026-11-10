@@ -24,23 +24,37 @@ class ConvertTest(unittest.TestCase):
         shutil.rmtree(self.tmp)
 
     def test_keeps_only_logins(self):
-        with open(self.tmp / "chrome_import.csv", newline="") as f:
+        with open(self.tmp / "chrome_import.csv", newline="", encoding="utf-8") as f:
             rows = list(csv.reader(f))
         self.assertEqual(rows[0], ["username", "password", "url"])
         self.assertEqual(len(rows), 4)
         self.assertEqual(rows[1], ["alice@example.com", "correct-horse-1", "https://mail.example.com"])
 
     def test_first_url_imported_and_extra_listed(self):
-        with open(self.tmp / "chrome_import.csv", newline="") as f:
+        with open(self.tmp / "chrome_import.csv", newline="", encoding="utf-8") as f:
             rows = list(csv.reader(f))
         self.assertEqual(rows[2][2], "https://shop.example.com")
-        multi = (self.tmp / "multi_site_entries.txt").read_text()
+        multi = (self.tmp / "multi_site_entries.txt").read_text(encoding="utf-8")
         self.assertIn("https://store.example.com", multi)
 
     def test_empty_username_gets_placeholder(self):
-        with open(self.tmp / "chrome_import.csv", newline="") as f:
+        with open(self.tmp / "chrome_import.csv", newline="", encoding="utf-8") as f:
             rows = list(csv.reader(f))
         self.assertEqual(rows[3][0], "aaa")
+
+    def test_empty_password_and_url_get_placeholder(self):
+        export = self.tmp / "bom.csv"
+        export.write_text(
+            "folder,favorite,type,name,notes,fields,reprompt,login_uri,login_username,login_password,login_totp\n"
+            ",,login,No pass,,,0,,bob,,\n"
+            ",,login,Empty,,,0,,,,\n",
+            encoding="utf-8-sig",
+        )
+        subprocess.run([sys.executable, str(ROOT / "convert.py"), str(export)],
+                       capture_output=True, text=True, check=True)
+        with open(self.tmp / "chrome_import.csv", newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+        self.assertEqual(rows[1:], [["bob", "aaa", "aaa"]])
 
     def test_summary_output(self):
         self.assertIn("3 passwords written", self.result.stdout)

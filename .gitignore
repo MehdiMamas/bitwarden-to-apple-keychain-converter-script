@@ -2,3 +2,5 @@
 !tests/fixtures/*.csv
 multi_site_entries.txt
 .worktrees/
+__pycache__/
+*.pyc
