@@ -36,7 +36,8 @@ def convert(input_path: str) -> None:
     output_file = input_file.parent / "chrome_import.csv"
     multi_site_file = input_file.parent / "multi_site_entries.txt"
     kept = 0
-    skipped = 0
+    skipped_non_login = 0
+    skipped_empty = 0
     multi_site_entries = []
 
     with open(input_file, newline="", encoding="utf-8-sig") as fin, \
@@ -48,7 +49,7 @@ def convert(input_path: str) -> None:
 
         for row in reader:
             if row.get("type") != "login":
-                skipped += 1
+                skipped_non_login += 1
                 continue
 
             raw_uri = (row.get("login_uri") or "").strip()
@@ -57,7 +58,7 @@ def convert(input_path: str) -> None:
             name = (row.get("name") or "").strip()
 
             if not raw_uri and not username and not password:
-                skipped += 1
+                skipped_empty += 1
                 continue
 
             uris = [u.strip() for u in raw_uri.split(",") if u.strip()] if raw_uri else [""]
@@ -90,9 +91,14 @@ def convert(input_path: str) -> None:
 
     print(f"Done — {kept} passwords written to {output_file}")
     if multi_site_entries:
-        print(f"Found {len(multi_site_entries)} multi-site entries — see {multi_site_file}")
-    if skipped:
-        print(f"Skipped {skipped} non-login entries (notes, cards, etc.)")
+        entry_word = "entry" if len(multi_site_entries) == 1 else "entries"
+        print(f"Found {len(multi_site_entries)} multi-site {entry_word} — see {multi_site_file}")
+    if skipped_non_login:
+        entry_word = "entry" if skipped_non_login == 1 else "entries"
+        print(f"Skipped {skipped_non_login} non-login {entry_word} (notes, cards, etc.)")
+    if skipped_empty:
+        login_word = "login" if skipped_empty == 1 else "logins"
+        print(f"Skipped {skipped_empty} empty {login_word}")
 
 
 if __name__ == "__main__":
