@@ -35,6 +35,10 @@ def convert(input_path: str) -> None:
 
     output_file = input_file.parent / "chrome_import.csv"
     multi_site_file = input_file.parent / "multi_site_entries.txt"
+
+    if output_file.exists() or multi_site_file.exists():
+        sys.exit("Warning: Output files already exist. Refusing to overwrite.")
+    
     kept = 0
     skipped_non_login = 0
     skipped_empty = 0
