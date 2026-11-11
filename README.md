@@ -43,6 +43,18 @@ This produces two files:
 - **`chrome_import.csv`** -- all your website logins in Chrome's import format (`username, password, url`). Non-login entries (notes, wifi passwords, cards, identities) are filtered out.
 - **`multi_site_entries.txt`** -- a list of entries that had multiple websites in Bitwarden. Only the first URL is imported; this file tells you exactly which entries to find in Apple Passwords and which extra URLs to add manually.
 
+To choose a different Chrome CSV path, use `--output`:
+
+```
+python3 convert.py export.csv --output "imports/passwords.csv"
+```
+
+The destination folder must already exist. Relative paths are relative to the
+current working directory. The companion `multi_site_entries.txt` report stays
+next to the input export. Without `--output`, the CSV still goes next to the input
+as `chrome_import.csv`. Existing outputs require `--force`; even with it, the
+CSV cannot overwrite the input export or the companion report.
+
 ## Import Steps
 
 1. Open Chrome and go to `chrome://flags/#password-import-export` -- enable the import flag

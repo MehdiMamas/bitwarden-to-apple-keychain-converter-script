@@ -6,7 +6,7 @@ Converts a Bitwarden CSV export into a CSV that Chrome can import,
 which you can then import from Chrome into Safari → Keychain.
 
 Usage:
-    python3 convert.py <bitwarden_export.csv>
+    python3 convert.py <bitwarden_export.csv> [--output PATH] [--force]
 
 Output:
     chrome_import.csv (in the same directory as the input file)
@@ -21,6 +21,7 @@ Steps after running this script:
     7. Passwords will sync to iCloud Keychain
 """
 
+import argparse
 import csv
 import sys
 from pathlib import Path
@@ -28,17 +29,27 @@ from pathlib import Path
 PLACEHOLDER = "aaa"
 
 
-def convert(input_path: str, force: bool = False) -> None:
+def _same_file(first: Path, second: Path) -> bool:
+    """Catch both path aliases and existing hardlinks before opening outputs."""
+    return first.resolve() == second.resolve() or (
+        first.exists() and second.exists() and first.samefile(second)
+    )
+
+
+def convert(input_path: str, force: bool = False, output_path: str | None = None) -> None:
     input_file = Path(input_path)
     if not input_file.exists():
         sys.exit(f"File not found: {input_file}")
 
-    output_file = input_file.parent / "chrome_import.csv"
+    output_file = Path(output_path) if output_path is not None else input_file.parent / "chrome_import.csv"
     multi_site_file = input_file.parent / "multi_site_entries.txt"
 
-    if input_file.resolve() in (output_file.resolve(), multi_site_file.resolve()):
-        sys.exit(f"Input file must not be named {output_file.name} or {multi_site_file.name}; "
-                 "rename it and run again.")
+    if any(_same_file(input_file, target) for target in (output_file, multi_site_file)):
+        sys.exit("Input file must be different from both output files; "
+                 "choose another --output path or rename the input.")
+    if _same_file(output_file, multi_site_file):
+        sys.exit("CSV output must be different from multi_site_entries.txt; "
+                 "choose another --output path.")
 
     if not force and (output_file.exists() or multi_site_file.exists()):
         sys.exit("Warning: Output files already exist. Refusing to overwrite. "
@@ -111,9 +122,9 @@ def convert(input_path: str, force: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    force = "--force" in args
-    args = [a for a in args if a != "--force"]
-    if len(args) != 1:
-        sys.exit(f"Usage: python3 {sys.argv[0]} <bitwarden_export.csv> [--force]")
-    convert(args[0], force=force)
+    parser = argparse.ArgumentParser(description="Convert a Bitwarden CSV to Chrome import format.")
+    parser.add_argument("input_path", help="Bitwarden CSV export")
+    parser.add_argument("--output", metavar="PATH", help="Chrome CSV path (default: chrome_import.csv next to input)")
+    parser.add_argument("--force", action="store_true", help="replace existing output files")
+    args = parser.parse_args()
+    convert(args.input_path, force=args.force, output_path=args.output)
