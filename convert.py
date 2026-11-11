@@ -36,6 +36,10 @@ def convert(input_path: str, force: bool = False) -> None:
     output_file = input_file.parent / "chrome_import.csv"
     multi_site_file = input_file.parent / "multi_site_entries.txt"
 
+    if input_file.resolve() in (output_file.resolve(), multi_site_file.resolve()):
+        sys.exit(f"Input file must not be named {output_file.name} or {multi_site_file.name}; "
+                 "rename it and run again.")
+
     if not force and (output_file.exists() or multi_site_file.exists()):
         sys.exit("Warning: Output files already exist. Refusing to overwrite. "
                  "Run again with --force to replace them.")
