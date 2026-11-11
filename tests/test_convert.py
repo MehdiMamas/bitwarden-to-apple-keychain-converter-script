@@ -74,7 +74,7 @@ class ConvertTest(unittest.TestCase):
             ",,note,Note 1,,,0,,,,\n",
             encoding="utf-8-sig",
         )
-        res = subprocess.run([sys.executable, str(ROOT / "convert.py"), str(export)],
+        res = subprocess.run([sys.executable, str(ROOT / "convert.py"), str(export), "--force"],
                              capture_output=True, text=True, check=True)
         self.assertIn("Skipped 1 empty login", res.stdout)
         self.assertIn("Skipped 1 non-login entry (notes, cards, etc.)", res.stdout)
@@ -87,7 +87,7 @@ class ConvertTest(unittest.TestCase):
             ",,login,Empty 2,,,0,,,,\n",
             encoding="utf-8-sig",
         )
-        res_plural = subprocess.run([sys.executable, str(ROOT / "convert.py"), str(export_plural)],
+        res_plural = subprocess.run([sys.executable, str(ROOT / "convert.py"), str(export_plural), "--force"],
                                     capture_output=True, text=True, check=True)
         self.assertIn("Skipped 2 empty logins", res_plural.stdout)
 
@@ -104,6 +104,34 @@ class ConvertTest(unittest.TestCase):
         )
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("Warning: Output files already exist", r.stderr + r.stdout)
+
+    def test_force_overwrites_existing_files(self):
+        (self.tmp / "chrome_import.csv").write_text("stale\n", encoding="utf-8")
+        r = subprocess.run(
+            [sys.executable, str(ROOT / "convert.py"), str(self.export), "--force"],
+            capture_output=True, text=True
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("stale", (self.tmp / "chrome_import.csv").read_text(encoding="utf-8"))
+
+    def test_force_before_path(self):
+        r = subprocess.run(
+            [sys.executable, str(ROOT / "convert.py"), "--force", str(self.export)],
+            capture_output=True, text=True
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_refuses_input_named_like_output(self):
+        src = self.tmp / "chrome_import.csv"
+        original = self.export.read_bytes()
+        src.write_bytes(original)
+        r = subprocess.run(
+            [sys.executable, str(ROOT / "convert.py"), str(src), "--force"],
+            capture_output=True, text=True
+        )
+        self.assertNotEqual(r.returncode, 0)
+        self.assertEqual(src.read_bytes(), original)
+
 
 if __name__ == "__main__":
     unittest.main()
