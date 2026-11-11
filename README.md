@@ -19,6 +19,8 @@ In the folder holding your Bitwarden export:
 curl -fsSLO https://raw.githubusercontent.com/MehdiMamas/bitwarden-to-apple-keychain-converter-script/master/convert.py && python3 convert.py <your_bitwarden_export.csv>
 ```
 
+If `chrome_import.csv` or `multi_site_entries.txt` already exists next to the export, the script stops instead of overwriting it. Add `--force` to replace them.
+
 Then follow the [import steps](#import-steps).
 
 ## Requirements

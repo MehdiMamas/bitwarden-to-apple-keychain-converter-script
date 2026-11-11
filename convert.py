@@ -28,7 +28,7 @@ from pathlib import Path
 PLACEHOLDER = "aaa"
 
 
-def convert(input_path: str) -> None:
+def convert(input_path: str, force: bool = False) -> None:
     input_file = Path(input_path)
     if not input_file.exists():
         sys.exit(f"File not found: {input_file}")
@@ -36,8 +36,9 @@ def convert(input_path: str) -> None:
     output_file = input_file.parent / "chrome_import.csv"
     multi_site_file = input_file.parent / "multi_site_entries.txt"
 
-    if output_file.exists() or multi_site_file.exists():
-        sys.exit("Warning: Output files already exist. Refusing to overwrite.")
+    if not force and (output_file.exists() or multi_site_file.exists()):
+        sys.exit("Warning: Output files already exist. Refusing to overwrite. "
+                 "Run again with --force to replace them.")
     
     kept = 0
     skipped_non_login = 0
@@ -106,6 +107,9 @@ def convert(input_path: str) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        sys.exit(f"Usage: python3 {sys.argv[0]} <bitwarden_export.csv>")
-    convert(sys.argv[1])
+    args = sys.argv[1:]
+    force = "--force" in args
+    args = [a for a in args if a != "--force"]
+    if len(args) != 1:
+        sys.exit(f"Usage: python3 {sys.argv[0]} <bitwarden_export.csv> [--force]")
+    convert(args[0], force=force)
