@@ -1,4 +1,5 @@
 import csv
+import os
 import shutil
 import subprocess
 import sys
@@ -131,6 +132,83 @@ class ConvertTest(unittest.TestCase):
         )
         self.assertNotEqual(r.returncode, 0)
         self.assertEqual(src.read_bytes(), original)
+
+
+class OutputOptionTest(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.tmp = Path(temporary.name)
+        self.source = self.tmp / "source"
+        self.source.mkdir()
+        self.export = self.source / "export.csv"
+        shutil.copy(FIXTURE, self.export)
+
+    def run_cli(self, *args):
+        return subprocess.run(
+            [sys.executable, str(ROOT / "convert.py"), *map(str, args)],
+            cwd=self.tmp, capture_output=True, text=True, encoding="utf-8",
+            env={**os.environ, "PYTHONUTF8": "1"},
+        )
+
+    def test_custom_path_keeps_companion_report_next_to_input(self):
+        destination = self.tmp / "輸出 folder"
+        destination.mkdir()
+        output = destination / "chosen.csv"
+        result = self.run_cli("--output", output, self.export)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        with output.open(newline="", encoding="utf-8") as handle:
+            rows = list(csv.reader(handle))
+        self.assertEqual(rows[0], ["username", "password", "url"])
+        self.assertEqual(rows[1], ["alice@example.com", "correct-horse-1", "https://mail.example.com"])
+        self.assertEqual(len(rows), 4)
+        self.assertFalse((self.source / "chrome_import.csv").exists())
+        self.assertTrue((self.source / "multi_site_entries.txt").exists())
+        self.assertFalse((destination / "multi_site_entries.txt").exists())
+
+    def test_relative_output_is_relative_to_working_directory(self):
+        result = self.run_cli(self.export, "--output", "chosen.csv")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.tmp / "chosen.csv").is_file())
+        self.assertFalse((self.source / "chosen.csv").exists())
+
+    def test_existing_custom_output_requires_force(self):
+        output = self.tmp / "chosen.csv"
+        output.write_text("keep this\n", encoding="utf-8")
+        result = self.run_cli(self.export, "--output", output)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(output.read_text(encoding="utf-8"), "keep this\n")
+        self.assertFalse((self.source / "multi_site_entries.txt").exists())
+        original = self.export.read_bytes()
+        result = self.run_cli("--force", self.export, "--output", output)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(output.read_text(encoding="utf-8").startswith("username,password,url"))
+        self.assertEqual(self.export.read_bytes(), original)
+
+    def test_force_cannot_overwrite_input_or_companion_report_with_csv(self):
+        original = self.export.read_bytes()
+        for output in (self.export, self.source / "multi_site_entries.txt"):
+            with self.subTest(output=output.name):
+                result = self.run_cli(self.export, "--output", output, "--force")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(self.export.read_bytes(), original)
+                self.assertFalse((self.source / "multi_site_entries.txt").exists())
+
+    def test_hardlinked_input_is_protected_even_with_force(self):
+        output = self.tmp / "linked.csv"
+        try:
+            os.link(self.export, output)
+        except OSError as error:
+            self.skipTest(f"hardlinks unavailable: {error}")
+        original = self.export.read_bytes()
+        result = self.run_cli(self.export, "--output", output, "--force")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.export.read_bytes(), original)
+
+    def test_missing_output_value_is_usage_error(self):
+        result = self.run_cli(self.export, "--output")
+        self.assertEqual(result.returncode, 2)
+        self.assertFalse((self.source / "chrome_import.csv").exists())
 
 
 if __name__ == "__main__":
